@@ -84,7 +84,7 @@ function create_whoowns_owner_post_type() {
 		'not_found_in_trash'  => __( 'No owners found in Trash', 'whoowns' ),
 	);
 	$rewrite = array(
-		'slug'                => __( 'owners', 'whoowns' ),
+		'slug'                => get_option('whoowns_owner_slug'),
 		'with_front'          => true,
 		'pages'               => true,
 		'feeds'               => true,
