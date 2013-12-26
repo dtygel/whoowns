@@ -3,6 +3,8 @@
 //Creation of the meta_box for owner's shareholders and metadata (other infos)
 function whoowns_meta_box_add() {  
 	add_meta_box( 'whoowns_owner_details', __('Details','whoowns'), 'whoowns_meta_box_details', 'whoowns_owner', 'normal', 'core');
+	add_meta_box( 'whoowns_related_owners', __('Related Owners','whoowns'), 'whoowns_meta_box_related_owners', 'post', 'side', 'high');
+	add_meta_box( 'whoowns_related_owners', __('Related Owners','whoowns'), 'whoowns_meta_box_related_owners', 'page', 'side', 'high');
 }
 add_action( 'add_meta_boxes', 'whoowns_meta_box_add' );
 
@@ -37,12 +39,12 @@ function whoowns_meta_box_details ($post) {
 	<p><label for="whoowns_legal_registration"><?=__('What is the formal registration identity of this owner?','whoowns')?></label>
 	<input type="text" size="14" name="whoowns_legal_registration" id="whoowns_legal_registration" value="<?=$legal_registration?>" />
 	</p>
-	<?
+	<?php
 
 	//Owner's TYPE:
 	$owner_types = get_terms('whoowns_owner_types', 'hide_empty=0');
 	$whoowns_owner_type = wp_get_post_terms($post->ID, 'whoowns_owner_types');
-	$selected_type = ($whoowns_owner_type[0]->term_id) ? $whoowns_owner_type[0]->term_id : '';
+	$selected_type = (isset($whoowns_owner_type[0]->term_id)) ? $whoowns_owner_type[0]->term_id : '';
 	?>
 	<h3><?=__('Type of this Owner','whoowns')?></h3>
 	<p class="description"><?=__('Is this owner an enterprise? a person? other type? Please choose below:','whoowns')?></p>
@@ -50,17 +52,17 @@ function whoowns_meta_box_details ($post) {
 		<label for="whoowns_owner_type"><?=__('Type','whoowns')?></label>
 		<select name="whoowns_owner_type" id="whoowns_owner_type">
 			<option value=""><?=__('None', 'whoowns')?></option>
-		<?
+		<?php
 		foreach ($owner_types as $t) {
 			?>
-			<option value="<?=$t->term_id?>" <? selected($selected_type, $t->term_id); ?>><?=__($t->name,'whoowns')?></option>
-			<?
+			<option value="<?=$t->term_id?>" <?php selected($selected_type, $t->term_id); ?>><?=__($t->name,'whoowns')?></option>
+			<?php
 		}
 		?>
 		</select>
 	</p>
 	
-	<?
+	<?php
 	
 	// DBpedia URI:
 	$dbpedia_uri = get_post_meta($post->ID, 'whoowns_dbpedia_uri',true);
@@ -70,14 +72,14 @@ function whoowns_meta_box_details ($post) {
 	<p><label for="whoowns_dbpedia_uri"><?=__('URI in dbpedia:','whoowns')?></label>
 	<input type="text" size="60" name="whoowns_dbpedia_uri" id="whoowns_dbpedia_uri" value="<?=$dbpedia_uri?>" />
 	</p>
-	<?
+	<?php
 	
 	
 	
 	
 	//Revenues of the owner
 	$revenue = get_post_meta($post->ID, 'whoowns_revenue',true);
-	$selected_revenue_months = ($revenue['months']) ? $revenue['months'] : '12';
+	$selected_revenue_months = (isset($revenue['months'])) ? $revenue['months'] : '12';
 	?>
 	<h3><?=__('Net revenue','whoowns')?></h3>
 	<p class="description"><?=__('What is the net revenue of this owner? You must also define the date and period of this information, along with the source','whoowns')?></p>
@@ -90,7 +92,7 @@ function whoowns_meta_box_details ($post) {
 	<p><label for="whoowns_revenue_months"><?=__('This revenue is for how many months?','whoowns')?></label>
 	<select name="whoowns_revenue_months" id="whoowns_revenue_months">
 			<option value=""><?=__('None', 'whoowns')?></option>
-		<?
+		<?php
 		for ($m=1;$m<13;$m++) {
 			switch ($m) {
 				case 3:
@@ -107,8 +109,8 @@ function whoowns_meta_box_details ($post) {
 				break;
 			}
 		?>
-			<option value="<?=$m?>" <? selected($selected_revenue_months, $m); ?>><?=$mtxt?></option>
-			<?
+			<option value="<?=$m?>" <?php selected($selected_revenue_months, $m); ?>><?=$mtxt?></option>
+			<?php
 		}
 		?>
 	</select>
@@ -120,7 +122,7 @@ function whoowns_meta_box_details ($post) {
 	<input type="text" name="whoowns_revenue_source_url" id="whoowns_revenue_source_url" value="<?=$revenue['source_url']?>" />
 	</p>
 	
-	<?
+	<?php
 	
 	//Owner's owners (shareholders)
 	$owners = whoowns_get_direct_shareholders( $post->ID );
@@ -149,12 +151,12 @@ function whoowns_meta_box_details ($post) {
 				<p><a id='whoowns_toggle_more_shareholders' href='javascript:whoowns_toggle("whoowns_toggle_more_shareholders","whoowns_more_shareholders","<b>+</b> <?=__("Add more shareholders...","whoowns")?>","<b>-</b> <?=__("Hide","whoowns")?>");'><b>+</b> <?=__('Add more shareholders...','whoowns')?></a></p>
 				<table id='whoowns_more_shareholders' style='display:none'>
 				<tbody>
-			<?
+			<?php
 			}
 		?>
 			<tr>
 				<td>
-				<input class="whoowns_auto_label" type="text" name="whoowns_shareholder_name-<?=$i?>" id="whoowns_shareholder_name-<?=$i?>" value="<?=$owner->shareholder_name?>" size="50"/>
+				<input class="whoowns_auto_label" type="text" name="whoowns_shareholder_name-<?=$i?>" alt="whoowns_autocomplete" id="whoowns_shareholder_name-<?=$i?>" value="<?=$owner->shareholder_name?>" size="50"/>
 				<input class="whoowns_auto_id" type="hidden" name="whoowns_shareholder_id-<?=$i?>" id="whoowns_shareholder_id-<?=$i?>" value="<?=$owner->shareholder_id?>"/>
 				</td>
 				<td style="text-align:center"><input type="text" name="whoowns_share-<?=$i?>" id="whoowns_share-<?=$i?>" value="<?=whoowns_set_decimal_symbol($owner->share)?>" size="5"/>%</td>
@@ -164,7 +166,7 @@ function whoowns_meta_box_details ($post) {
 		?>
 		</tbody>
 	</table>
-	<?
+	<?php
 	
 	// Source of the shareholders data
 	$shareholders_source = get_post_meta($post->ID, 'whoowns_shareholders_source',true);
@@ -183,19 +185,19 @@ function whoowns_meta_box_details ($post) {
 	</p>
 	<p class="description"><?=__('Please attach the documents to validate the above mentioned source:','whoowns')?></p>
 	<ul>
-	<?
+	<?php
 	foreach($shareholders_source_files as $i=>$shareholders_source_file) {
 		$li = "whoowns_shareholders_source_file_".intval($i);
 		?>
 		<li id="<?=$li?>"><?=$shareholders_source_file['name']?> <a href="javascript:whoowns_file_delete('<?=$shareholders_source_file['name']?>','<?=$post->ID?>','<?=$li?>');" class="whoowns_file_delete"><?=__('Delete File')?></a></li>
-	<? }
+	<?php }
 	for ($j=$i+1;$j<=$i+3;$j++) {
 	?>
 		<li><label for="whoowns_shareholders_source_file_<?=intval($j)?>"><?=__('Add document','whoowns')?></label>
 		<input id="whoowns_shareholders_source_file_<?=intval($j)?>" name="whoowns_shareholders_source_file_<?=intval($j)?>" value="" size="25" type="file"></li>
-	<? } ?>
+	<?php } ?>
 	</ul>
-	<?
+	<?php
 }
 
 
@@ -211,7 +213,10 @@ function whoowns_meta_boxes_save( $post_id ) {
 	if( !isset( $_POST['meta_box_nonce'] ) || !wp_verify_nonce( $_POST['meta_box_nonce'], 'whoowns_nonce' ) ) return;
 	
 	// if our current user can't edit this post, bail
-	if( !current_user_can( 'edit_post' ) ) return;
+	if( !current_user_can( 'edit_whoowns_owner' ) ) return;
+	
+	// if it is not a whoowns_owner type of post, bail
+	if ( $_POST['post_type'] != 'whoowns_owner') return;
 	
 	//save the registration id:
 	update_post_meta($post_id, 'whoowns_legal_registration', $_POST['whoowns_legal_registration']);
@@ -287,17 +292,90 @@ add_action( 'save_post', 'whoowns_meta_boxes_save' );
 
 
 
-function whoowns_autocomplete_callback() {
-	global $wpdb;
-	
-	$term=$_REQUEST['term'];
-	$sql = "SELECT post_title as label, ID as value FROM ".$wpdb->prefix."posts WHERE post_status='publish' AND post_type='whoowns_owner' AND post_title like '%$term%' order by post_title";
-	$res = $wpdb->get_results($sql,OBJECT);
-	echo json_encode($res);
 
-	die(); // this is required to return a proper result
+function whoowns_meta_boxes_delete( $post_id ) {
+	global $wpdb;
+	// if our current user can't edit this post, bail
+	if( !current_user_can( 'delete_whoowns_owners' ) ) return;
+	
+	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_shares." WHERE to_id = %d", $post_id ) );
+	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_networks_cache." WHERE post_id = %d", $post_id ) );
+	
+	return true;
 }
-add_action('wp_ajax_whoowns_autocomplete', 'whoowns_autocomplete_callback');
+add_action( 'delete_post', 'whoowns_meta_boxes_delete', 10 );
+
+
+
+
+
+function whoowns_meta_box_related_owners ($post) {
+
+	// Nonce field for checking when saving.
+	wp_nonce_field( 'whoowns_related_nonce', 'meta_box_related_nonce' );
+	
+	//Related owners
+	$tmp = whoowns_get_owner_data(get_post_meta( $post->ID, 'whoowns_related_owner' ));
+	$owners = (is_array($tmp))
+		? $tmp
+		: array($tmp);
+	#pR($owners);exit;
+	$num_existing_owners=count($owners);
+	for ($i=$num_existing_owners;$i<get_option('whoowns_default_shareholders_number');$i++) {
+		$owners[$i]->ID='';
+	}
+	?>
+	<div>
+	<p class="description"><?=__('Who are the owners related to this article?','whoowns')?></p>
+		<?php
+		foreach ($owners as $i=>$owner) {
+			if ($i>$num_existing_owners && $i>=3 && !$done) {
+				$done=true;
+			?>
+				</div>
+				<p><a id='whoowns_toggle_more_related_owners' href='javascript:whoowns_toggle("whoowns_toggle_more_related_owners","whoowns_more_related_owners","<b>+</b> <?=__("Add more...","whoowns")?>","<b>-</b> <?=__("Hide","whoowns")?>");'><b>+</b> <?=__('Add more...','whoowns')?></a></p>
+				<div id='whoowns_more_related_owners' style='display:none'>
+			<?php
+			}
+		?>
+				<input class="whoowns_auto_label" type="text" name="whoowns_related_owner_name-<?=$i?>" alt="whoowns_autocomplete" id="whoowns_related_owner_name-<?=$i?>" value="<?=$owner->name?>" size="30"/>
+				<input class="whoowns_auto_id" type="hidden" name="whoowns_related_owner_id-<?=$i?>" id="whoowns_related_owner_id-<?=$i?>" value="<?=$owner->ID?>"/>
+		<?php
+		}
+		?>
+		</div>
+	<?php
+}
+
+
+
+
+
+function whoowns_related_owners_meta_box_save( $post_id ) {
+    // Bail if we're doing an auto save
+	if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+
+	// if our nonce isn't there, or we can't verify it, bail
+	if( !isset( $_POST['meta_box_related_nonce'] ) || !wp_verify_nonce( $_POST['meta_box_related_nonce'], 'whoowns_related_nonce' ) ) return;
+	
+	// if our current user can't edit this post, bail
+	if( !current_user_can( 'edit_post' ) && !current_user_can( 'edit_page' )) return;
+	
+	// if it is not a whoowns_owner type of post, bail
+	if ( !in_array($_POST['post_type'], array('post', 'page'))) return;
+	
+	// Prepare the POST data for saving the shareholders:
+	delete_post_meta($post_id, 'whoowns_related_owner');
+	#pR($_POST);exit;
+    foreach ($_POST as $f=>$value) {
+    	if (substr($f,0,25)=='whoowns_related_owner_id-' && $value){
+			add_post_meta($post_id, 'whoowns_related_owner', $value);
+    	}
+    }
+}
+add_action( 'save_post', 'whoowns_related_owners_meta_box_save' );
+
+
 
 
 

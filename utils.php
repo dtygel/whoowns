@@ -11,10 +11,10 @@ function whoowns_get_owner_data($id=null,$provide_links=false,$extra_data=false)
 				return;
 	$owner_data = array();
 	foreach ($posts_id as $i=>$post_id) {
-		if ($post_id)
-			$post = get_post($post_id);
+		$post = get_post($post_id);
 		$owner_image_size = explode('x',get_option('whoowns_owner_image_size'));
 		
+		$owner_data[$i] = new stdClass();
 		$owner_data[$i]->ID = $post->ID;
 		$owner_data[$i]->name = $post->post_title;
 		if ($provide_links)
@@ -37,6 +37,7 @@ function whoowns_get_owner_data($id=null,$provide_links=false,$extra_data=false)
 		if ($extra_data) {
 			$owner_data[$i]->shareholders = whoowns_get_direct_shareholders( $post->ID, $provide_links,$extra_data );
 			$owner_data[$i]->main_actors = whoowns_get_main_actors_in_network( $post->ID, $provide_links );
+			#$owner_data[$i]->related_posts = whoowns_get_related_posts( $post->ID ); 
 		}
 	}
 
@@ -177,6 +178,7 @@ function whoowns_update_share_owners($post_id, $owners = array()) {
 	}
 }
 
+
 function whoowns_calculate_relative_shares($post_id) {
 	$shareholders = whoowns_get_direct_shareholders($post_id);
 	$participation_sum=$rel_participation_sum=0;
@@ -276,18 +278,24 @@ function whoowns_generate_directed_network($postid,$net=array(),$dir,$minimum_sh
 }
 
 function whoowns_generate_network($postid,$mode='unique',$show_dir=false) {
-	$net['participation'] = whoowns_generate_directed_network($postid,array(),'participation');
-	$net['composition'] = whoowns_generate_directed_network($postid,array(),'composition');
-	if ($mode=='without_reference')
-		unset($net['participation'][0],$net['composition'][0]);
+	$cached=true;
+	if ($show_dir || !($net = whoowns_retrieve_cached($postid,'post_ids',true))) {
+		$net['participation'] = whoowns_generate_directed_network($postid,array(),'participation');
+		$net['composition'] = whoowns_generate_directed_network($postid,array(),'composition');
+		$cached=false;
+	}
 	if ($mode=='unique') {
 		if ($show_dir) {
 			$net['participation'] = array_unique($net['participation']);
 			$net['composition'] = array_unique($net['composition']);
-		} else {
+		} elseif (!$cached) {
 			$net = array_unique(array_merge($net['participation'],$net['composition']));
+			whoowns_save_cached($postid,array('post_ids'=>$net));
 		}
 	}
+	if ($mode=='without_reference')
+		unset($net[0], $net['participation'][0], $net['composition'][0]);
+	//pR($net);
 	return $net;
 }
 
@@ -315,10 +323,7 @@ function whoowns_prepare_network_data_for_visualization($postid='',$net='') {
 	$cached=false;
 	if ($postid && $no_net) {
 		if (!($network_data->nodes = whoowns_retrieve_cached($postid,'nodes',true))) {
-			if(!($post_ids = whoowns_retrieve_cached($postid,'post_ids',true))) {
-				$post_ids = whoowns_generate_network($postid);
-				whoowns_save_cached($postid,array('post_ids'=>$post_ids));
-			}
+			$post_ids = whoowns_generate_network($postid);
 			$net = whoowns_get_owner_data($post_ids,true,true);
 		} else
 			$cached=true;
@@ -332,30 +337,24 @@ function whoowns_prepare_network_data_for_visualization($postid='',$net='') {
 			if ($n->ID==$postid) {
 				$name = $n->name;
 				$type = $n->type->slug;
-				/*$controladores_diretos=$n->controladores_diretos;
-				$controladores_indiretos=$n->controladores_indiretos;
-				$controle_direto=$n->controle_direto;
-				$participacao_direta=$n->participacao_direta;
-				$controle_indireto=$n->controle_indireto;
-				$participacao_indireta=$n->participacao_indireta;*/
 			}
 			$node->data->id=strval($n->ID);
 			$node->data->name=$n->name;
-			$node->data->is_controlled = ($n->controlled_by) ? 1 : 0;
-			$node->data->is_final_controller = ($n->is_final_controller) ? 1 : 0;
-			$node->data->is_interchainer = ($n->is_interchainer) ? 1 : 0;
-			if ($node->data->is_final_controller)
+			//$node->data->is_controlled = ($n->controlled_by) ? 1 : 0;
+			//$node->data->is_final_controller = ($n->is_final_controller) ? 1 : 0;
+			//$node->data->is_interchainer = ($n->is_interchainer) ? 1 : 0;
+			if ($n->is_final_controller)
 				$node->data->rankType="finalController";
-			elseif ($node->data->is_interchainer)
+			elseif ($n->is_interchainer)
 					$node->data->rankType="interChainer";
 					else 
 						$node->data->rankType="notRanked";
-			$node->data->typeTxt = ($n->type)
-				? __($n->type->name,'whoowns')
-				: __("Private enterprise",'whoowns');
-			$node->data->type = ($n->ID==$postid)
-				? $n->type->slug."Ref"
-				: $n->type->slug;
+			//$node->data->typeTxt = ($n->type)
+			//	? __($n->type->name,'whoowns')
+			//	: __("Private enterprise",'whoowns');
+			//$node->data->type = ($n->ID==$postid)
+			//	? $n->type->slug."Ref"
+			//	: $n->type->slug;
 			$node->data->icon = ($n->type->slug)
 				? $n->type->slug
 				: 'private-enterprise';
@@ -365,10 +364,10 @@ function whoowns_prepare_network_data_for_visualization($postid='',$net='') {
 					$node->data->icon .= "UltController";
 					elseif ($n->is_interchainer)
 						$node->data->icon .= "InterChainer";
-			$node->data->IPA=floatval($n->accumulated_power['IPA']*100);
-			$node->data->PA=floatval($n->PA);
+			//$node->data->IPA=floatval($n->accumulated_power['IPA']*100);
+			//$node->data->PA=floatval($n->PA);
 			//$node->data->IPAtam=floatval($n->IPAtam);
-			$node->data->R=intval($n->rank);
+			//$node->data->R=intval($n->rank);
 			// Now, add to the array:
 			$network_data->nodes[]=$node;
 		}
@@ -387,7 +386,7 @@ function whoowns_prepare_network_data_for_visualization($postid='',$net='') {
 	} else
 		$net = whoowns_get_network_relations($net);
 	if (!$cached) {
-		//Generate the nodes:
+		//Generate the edges:
 		$network_data->edges = array();
 		foreach ($net as $n) {
 			unset($edge);
@@ -430,30 +429,139 @@ add_action('wp_ajax_whoowns_load_network_data', 'whoowns_load_network_data_callb
 //And below I add the same function as an accepted ajax action for not logged in users:
 add_action( 'wp_ajax_nopriv_whoowns_load_network_data', 'whoowns_load_network_data_callback' );
 
-function whoowns_select_owners($filters='ranked',$search='',$orderby='whoowns_PA',$order='DESC',$page=0) {
+function whoowns_load_owner_data_callback() {
+	$data = whoowns_get_owner_data($_POST['post_id'], true);
+	echo json_encode($data);
+	die();
+}
+add_action('wp_ajax_whoowns_load_owner_data', 'whoowns_load_owner_data_callback');
+add_action( 'wp_ajax_nopriv_whoowns_load_owner_data', 'whoowns_load_owner_data_callback' );
+
+function whoowns_show_legends_callback() {
+	$legends = array();
+	$owner_types = get_terms('whoowns_owner_types', 'hide_empty=0');
+	foreach ($owner_types as $i=>$type) {
+		$legends['icons'][$i]['label'] = __($type->name, 'whoowns');
+		$legends['icons'][$i]['img'] = $type->slug.'_'.get_option('whoowns_legends_icon_size').'.png';
+	}
+	$legends['colors'] = array(
+		array(
+			'label'=>__('Center of <i>this</i> network','whoowns'),
+			'img'=>'colorRef_'.get_option('whoowns_legends_icon_size').'.png'
+		),
+		array(
+			'label'=>__('Enterprise with interchain participation','whoowns'),
+			'img'=>'colorInterChainer_'.get_option('whoowns_legends_icon_size').'.png'
+		),
+		array(
+			'label'=>__('Ultimate controller','whoowns'),
+			'img'=>'colorUltController_'.get_option('whoowns_legends_icon_size').'.png'
+		)
+	);
+	$legends['arrows'] = array(
+		array(
+			'label'=>__('Control over the enterprise (>50%)','whoowns'),
+			'img'=>'arrowControl_'.get_option('whoowns_legends_icon_size').'.png'
+		),
+		array(
+			'label'=>__('Participation of less than 50%','whoowns'),
+			'img'=>'arrowNoControl_'.get_option('whoowns_legends_icon_size').'.png'
+		)
+	);
+	switch(get_option('whoowns_legends_format')) {
+		case 'horizontal':
+			?>
+			<h2><?=__('Legends','whoowns')?></h2>
+			<table id='cy-legends-table'>
+				<tr id='cy-legends-table-subtitle'>
+					<th colspan="6"><?=__('Icons','whoowns')?></th>
+					<th colspan="6"><?=__('Colors','whoowns')?></th>
+					<th colspan="4"><?=__('Arrows','whoowns')?></th>
+				</tr>
+				<tr id='cy-legends-table-content'>
+					<?php
+					foreach ($legends as $type=>$sublegends) {
+						$first=' whoowns-first';
+						foreach ($sublegends as $legend) {
+							?>
+							<td class="whoowns-icon<?=$first?>"><img src="<?=plugins_url('/images/'.$legend['img'], __FILE__ )?>" /></td>
+							<td class="whoowns-label"><?=$legend['label']?></td>
+						<?php
+							if ($first)
+								$first='';
+						}
+					}
+					?>
+				</tr>
+			</table>
+			<?php
+		break;
+		case 'vertical':
+		break;
+	}
+	
+	die();
+}
+add_action('wp_ajax_whoowns_show_legends', 'whoowns_show_legends_callback');
+add_action( 'wp_ajax_nopriv_whoowns_show_legends', 'whoowns_show_legends_callback' );
+
+function whoowns_autocomplete_callback() {
 	global $wpdb;
 	
-	if (!$filters)
-		$filters='ranked';
-	if (!$orderby)
-		$orderby='whoowns_PA';
+	$term=$_REQUEST['term'];
+	$sql = "SELECT post_title as label, ID as value FROM ".$wpdb->prefix."posts WHERE post_status='publish' AND post_type='whoowns_owner' AND post_title like '%$term%' order by post_title";
+	$res = $wpdb->get_results($sql,OBJECT);
+	echo json_encode($res);
+
+	die(); // this is required to return a proper result
+}
+add_action('wp_ajax_whoowns_autocomplete', 'whoowns_autocomplete_callback');
+add_action('wp_ajax_nopriv_whoowns_autocomplete', 'whoowns_autocomplete_callback');
+
+function whoowns_select_owners($filters,$s='',$orderby,$order,$page=0) {
+	global $wpdb;
 	
 	$args = array(
 		'posts_per_page' => get_option('whoowns_owners_per_page'),
-		'post_type' => 'whoowns_owner'
+		'post_type' => 'whoowns_owner', 
+		'fields' => 'ids'
 	);
+	
+	if (!$filters && !$s) {
+		$filters='ranked';
+		if (!$orderby) {
+			$orderby = 'whoowns_PA';
+			$order = 'DESC';
+		}
+	} elseif (!$orderby) {
+		$orderby = 'name';
+	}
+	/*elseif (is_array($filters)) {
+		$args['post__in'] = $filters;
+		unset($filters);
+	}*/
+		
 	if ($s) {
-		$args['s'] = $search;
-		$args['meta_query'][] = array(
-			'key' => 'whoowns_legal_registration',
-			'value' => trim(str_replace(array('.','/',',','-'),'',$s))
-		);
+		if (strpos($s,':')!==false) {
+			list($key,$values)=explode(':',$s);
+			if ($key == 'owner_ids') {
+				$owner_ids = explode('|',$values);
+				$args['post__in'] = $owner_ids;
+			}
+		} else {
+			$args['s'] = $s;
+			if ($tmp = intval(trim(str_replace(array('.','/',',','-'),'',$s))))
+				$args['meta_query'][] = array(
+					'key' => 'whoowns_legal_registration',
+					'value' => $tmp
+				);
+		}
 	}
 	if ($page)
 		$args['paged'] = $page;
 	switch ($orderby) {
 		case 'name':
-			$args['orderby'] = 'post_title';
+			$args['orderby'] = 'title';
 			$args['order'] = 'ASC';
 		break;
 		default:
@@ -463,7 +571,8 @@ function whoowns_select_owners($filters='ranked',$search='',$orderby='whoowns_PA
 		break;
 	}
 	
-	$filters = explode(',',$filters);
+	if (!is_array($filters))
+		$filters = explode(',',$filters);
 	foreach ($filters as $filter) {
 		switch ($filter) {
 			case 'ranked':
@@ -486,23 +595,30 @@ function whoowns_select_owners($filters='ranked',$search='',$orderby='whoowns_PA
 			break;
 		}
 	}
-	//pR($args);
-	$res = get_posts($args);
+	#pR($args);
+	$res = new WP_Query( $args );
+	if (!$res->posts)
+		return false;
+	
 	$owners = array();
-	foreach ($res as $i=>$r) {
-		$owners[] = whoowns_get_owner_data($r->ID,true);
+	foreach ($res->posts as $i=>$r) {
+		$owners[] = whoowns_get_owner_data($r,true);
 	}
-	return $owners;
+	$return->found_posts = $res->found_posts;
+	$return->max_num_pages = $res->max_num_pages;
+	$return->owners = $owners;
+	return $return;
 }
 
 function pR($txt) {
-	?><pre><?
+	?><pre><?php
 	print_r($txt)
-	?></pre><hr><?
+	?></pre><hr><?php
 }
 
 function whoowns_retrieve_cached($postid,$fields,$decoded=false) {
 	global $wpdb;
+
 	if (!$postid || !$fields)
 		return false;
 	$fields_sql = (is_array($fields))
@@ -514,13 +630,11 @@ function whoowns_retrieve_cached($postid,$fields,$decoded=false) {
 	if ($decoded) {
 		if (is_array($fields)) {
 			foreach ($fields as $field)
-				$cached->$field = json_decode($res[0]->$field);
+				$cached->$field = json_decode($res[0]->$field,true);
 		} else
-			$cached = json_decode($res[0]->$fields);
+			$cached = json_decode($res[0]->$fields,true);
 	} else {
-		$cached = ($decoded)
-			? json_decode($res[0]->$fields)
-			: $res[0]->$fields;
+		$cached = $res[0]->$fields;
 	}
 	return $cached;
 }
@@ -538,4 +652,88 @@ function whoowns_save_cached($postid,$values) {
 	return $res;
 }
 
+function whoowns_get_network_related_news($postid='', $net='') {
+	if (!$net && !$postid)
+		return false;
+	$no_net = (!$net);
+	$cached=false;
+	if ($postid && $no_net) {
+		if (!($names = whoowns_retrieve_cached($postid,'names',true))) {
+			$post_ids = whoowns_generate_network($postid);
+			$net = whoowns_get_owner_data($post_ids);
+		} else
+			$cached=true;
+	} else
+		$net = whoowns_get_owner_data($net);
+	if (!$cached) {
+		//Generate the names:
+		foreach ($net as $n) {
+			$names[]=whoowns_clean_owner_name($n->name);
+		}
+		whoowns_save_cached($postid,array('names'=>$names));
+	}
+	
+	/*$sql = "SELECT DISTINCTROW nome FROM assoc WHERE receita>0 AND id!=$id AND id IN (".implode(',',$p2).") ORDER BY receita DESC LIMIT 5";
+	$empresasNoticias = faz_query($sql,'','object');
+	$nomelimpo=array($nome);
+	if ($empresasNoticias)
+		foreach ($empresasNoticias as $e)
+			$nomelimpo[] = $e->nome;
+
+	foreach ($nomelimpo as $j=>$nm)
+		$nomelimpo[$j] = '"'.whoowns_clean_owner_name($nm).'"';*/
+	//$noticias = simplexml_load_file("http://news.google.com/news?cf=all&ned=pt-BR_br&hl=pt-BR&q=\"$nome\"&output=rss");
+	//date_default_timezone_set('America/Sao_Paulo');
+	$nomelimpotxt = implode(" | ",$nomelimpo);
+	$nomesitesBuscatxt = implode(", ", array_keys($sitesBusca));
+	$itens=array();
+	foreach ($sitesBusca as $siteBusca) {
+		$urlBusca = "http://br.bing.com/search?q=($nomelimpotxt) site:$siteBusca&format=rss";
+		$noticias = simplexml_load_file($urlBusca);
+		echo "<!--$urlBusca-->".chr(10);
+		if ($noticias->channel->item) {
+			$k=0;
+			foreach($noticias->channel->item as $item) {
+				if (!in_array($item->link,$sitesVetados) && strpos($item->link,$siteBusca)!==false) {
+					$k++;
+					$data = date('d/m/Y à\s H\hi e', strtotime($item->pubDate));
+					$link = $item->link;
+					$titulo = $item->title;
+					$desc = $item->description;
+		    		$itens[strtotime($item->pubDate)]="
+		    		<h2><a target='_blank' href='$link'>$titulo</a></h2>
+		    		<p class='data'>$data</p>
+		    		<p>$desc</p>
+		    		<p class='leiamais'><a target='_blank' href='$link'>ler notícia...</a></p>";
+		    		if ($k==$numNoticiasPorSite)
+		    			break;
+		   		}
+		   	}
+	    }
+	}
+	if (!$itens) {
+		$itens[]="<br />Não há notícias sobre \"<i>$nome</i>\" e empresas com receita nas quais tem participação direta ou indireta .";
+	}
+	krsort($itens);
+	?>
+	<div class="<?=$divclasstxt?>">
+		<h1>Últimas notícias relacionadas a <?=$nome?> e suas participações</h1>
+		<h5 style="padding-top:0">Pesquisa do Bing nas fontes: <?=$nomesitesBuscatxt?></h5>
+		<div id='noticiasRSS'>
+			<?=implode(chr(10),$itens)?>
+		</div>
+	</div>
+<?php 
+}
+
+function whoowns_clean_owner_name($name) {
+	return trim(str_replace(array(' SA ',' LTDA ',' LTD ',' INC ', ' SARL '),'',str_replace(array(',',';',':','-','_','.','/','(',')'),'',$name.' ')));
+}
+
+function dummy_for_translators() {
+	__('State','whoowns');
+	__('Private enterprise','whoowns');
+	__('Person','whoowns');
+	
+}
 ?>

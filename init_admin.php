@@ -3,6 +3,9 @@
 function whoowns_create_menu() {
 	add_menu_page(__('Whoowns Brazil Plugin Settings','whoowns'), __('Owners','whoowns'), 'administrator', __FILE__, 'whoowns_settings_page');
 	add_action( 'admin_init', 'whoowns_register_settings' );
+	remove_meta_box('whoowns_geodiv', 'whoowns_owner', 'normal');
+	remove_meta_box('tagsdiv-whoowns_owner_types', 'whoowns_owner', 'normal');
+	remove_meta_box('tagsdiv-whoowns_source_types', 'whoowns_owner', 'normal');
 }
 add_action('admin_menu', 'whoowns_create_menu');
 
@@ -32,8 +35,29 @@ function whoowns_populate_taxonomies() {
 	wp_insert_term('Private enterprise','whoowns_owner_types');
 	wp_insert_term('Person','whoowns_owner_types');
 	wp_insert_term('State','whoowns_owner_types');
-	/* __('Person','whoowns');
-	 __('State','whoowns');*/
+	 
+	$brazilian_states = array(
+		"Nacional"=>array("BR"),
+		"Norte"=>array("AC", "AM", "AP", "PA", "RO", "RR", "TO"), 
+		"Nordeste"=>array("AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"), 
+		"Centro-Oeste"=>array("DF", "GO", "MS", "MT"), 
+		"Sudeste"=>array("ES", "MG", "RJ", "SP"), 
+		"Sul"=>array("PR", "RS", "SC")
+	);
+	foreach ($brazilian_states as $region=>$states) {
+		if (!($parent = get_term_by("slug",sanitize_title($region),"whoowns_geo",ARRAY_A)))
+			$parent = wp_insert_term($region,'whoowns_geo');
+		$parent = $parent['term_id'];
+		//pR($parent);exit;
+		foreach ($states as $state_name) {
+			if (!($state = get_term_by("slug",sanitize_title($state_name),"whoowns_geo",ARRAY_A)))
+			$state = wp_insert_term($state_name,'whoowns_geo', array("slug"=>sanitize_title($state_name), "parent"=>$parent));
+			else $e=wp_update_term($state['term_id'],'whoowns_geo', array("parent"=>$parent));
+			//pR($e); exit;
+		}
+	}
+	 
+	 
 }
 
 // Add custom taxonomies and custom post types counts to dashboard
@@ -90,18 +114,16 @@ function update_edit_form() {
 add_action('post_edit_form_tag', 'update_edit_form');
 
 //Add plugin javascript for admin
-function add_whoowns_script($hook) {
-	if( !in_array($hook, array('post.php', 'post-new.php')) )
+function add_whoowns_admin_script($hook) {
+	if( !in_array($hook, array('post.php', 'post-new.php')))
         return;
 	
-	wp_enqueue_script('jquery-ui-autocomplete');
     wp_enqueue_script( 'whoowns-admin-script', plugins_url('/utils_admin.js', __FILE__ ), array('jquery') );
-    wp_localize_script( 'whoowns-admin-script', 'ajax_object', 
+    wp_localize_script( 'whoowns-admin-script', 'whoowns_admin_ajax_object', 
     	array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 
     		'delete_confirmation' => __('Are you sure you want to delete the file "{file}"?','whoowns')
     	)
     );
 }
-add_action('admin_enqueue_scripts', 'add_whoowns_script');  
-
+add_action('admin_enqueue_scripts', 'add_whoowns_admin_script');
 ?>
