@@ -1,5 +1,19 @@
 <?php
+// Table names:
+if (!isset($wpdb->whoowns_shares)) {
+	$wpdb->whoowns_shares = $wpdb->prefix."whoowns_shares";
+}
+if (!isset($wpdb->whoowns_networks_cache)) {
+	$wpdb->whoowns_networks_cache = $wpdb->prefix."whoowns_networks_cache";
+}
 
+// Version of the table
+global $whoowns_table_db_version;
+$whoowns_table_db_version = '0.6';
+$installed_ver = get_option('whoowns_table_db_version');
+if (!$installed_ver || $installed_ver != $whoowns_table_db_version) {
+	whoowns_table_update($installed_ver);
+}
 
 function whoowns_table_update($installed_ver) {
     global $wpdb, $whoowns_table_db_version;
@@ -25,10 +39,12 @@ function whoowns_table_update($installed_ver) {
     	  post_ids longtext NOT NULL,
     	  nodes longtext NOT NULL,
     	  edges longtext NOT NULL,
+    	  cy_list longtext NOT NULL,
+    	  news longtext NOT NULL,
     	  PRIMARY KEY  (post_id)
 	)";
 	// we do not execute sql directly
-	// we are calling dbDelta which can migrate database
+	// we are calling dbDelta which can migrate the database
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql1);
 	dbDelta($sql2);

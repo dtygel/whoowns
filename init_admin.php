@@ -9,12 +9,6 @@ function whoowns_create_menu() {
 }
 add_action('admin_menu', 'whoowns_create_menu');
 
-require_once dirname( __FILE__ ) . '/db_table.php';
-$installed_ver = get_option('whoowns_table_db_version');
-if (!$installed_ver || $installed_ver != $whoowns_table_db_version) {
-	whoowns_table_update($installed_ver);
-}
-
 function whoowns_deactivate () {
 	if ( ! current_user_can( 'activate_plugins' ) )
         return;

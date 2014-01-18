@@ -12,7 +12,9 @@ function whoowns_clean_metaboxes() {
 	remove_meta_box( 'postimagediv','whoowns_owner','side' ); // Featured Image Metabox
 	add_meta_box( 'postimagediv', __('Owner Image','whoowns'), 'post_thumbnail_meta_box', 'whoowns_owner', 'normal', 'high');
 
-	if(current_user_can('publish_whoowns_owners'))
+	/*if(current_user_can('publish_whoowns_owners'))
+		return;*/
+	if(current_user_can('publish_posts'))
 		return;
 	//I remove the following meta_boxes for common users (not admin or editors):
 	remove_meta_box( 'authordiv','whoowns_owner','normal' ); // Author Metabox
@@ -213,7 +215,8 @@ function whoowns_meta_boxes_save( $post_id ) {
 	if( !isset( $_POST['meta_box_nonce'] ) || !wp_verify_nonce( $_POST['meta_box_nonce'], 'whoowns_nonce' ) ) return;
 	
 	// if our current user can't edit this post, bail
-	if( !current_user_can( 'edit_whoowns_owner' ) ) return;
+	#if( !current_user_can( 'edit_whoowns_owners' ) ) return;
+	if( !current_user_can( 'edit_posts' ) ) return;
 	
 	// if it is not a whoowns_owner type of post, bail
 	if ( $_POST['post_type'] != 'whoowns_owner') return;
@@ -238,7 +241,7 @@ function whoowns_meta_boxes_save( $post_id ) {
 		'source_name'=>$_POST['whoowns_revenue_source_name'],
 		'source_url'=>$_POST['whoowns_revenue_source_url']
 	);
-	update_post_meta($post_id, 'whoowns_revenue', $revenue);
+	$changed_revenue = update_post_meta($post_id, 'whoowns_revenue', $revenue);
 	
 	//Save the name of the source of the owner's shareholders:
 	update_post_meta($post_id, 'whoowns_shareholders_source', $_POST['whoowns_shareholders_source']);
@@ -262,7 +265,7 @@ function whoowns_meta_boxes_save( $post_id ) {
 	 		        // Use the WordPress API to upload the file  
 		            $upload = wp_upload_bits($file['name'], null, file_get_contents($file['tmp_name']));  
 		            if(isset($upload['error']) && $upload['error'] != 0) {  
-						//TODO: Descobrir a função do wordpress que passa uma mensagem de erro para a tela pós salvamento, de modo que a falha do envio do arquivo seja notificada pós salvamento
+						//TODO: Discover how to pass an error message to the user after saving the changes
 						//wp_die('There was an error uploading your file. The error is: ' . $upload['error']);  
 		            } else {
 		            	$upload['name']=$file['name'];
@@ -270,7 +273,7 @@ function whoowns_meta_boxes_save( $post_id ) {
 		            }
   
 		        } else {
-		        	//TODO: Descobrir a função do wordpress que passa uma mensagem de erro para a tela pós salvamento, de modo que a falha do envio do arquivo seja notificada pós salvamento
+		        	//TODO: Discover how to pass an error message to the user after saving the changes
 		            //wp_die(__("The file type that you've uploaded is not supported. Please try a different type."));  
 		        }
 			}
@@ -278,15 +281,19 @@ function whoowns_meta_boxes_save( $post_id ) {
     }
 		
     // Prepare the POST data for saving the shareholders:
-    $owners=array();
+    $shareholders=array();
     foreach ($_POST as $f=>$value) {
     	if (substr($f,0,20)=='whoowns_shareholder_' || substr($f,0,14)=='whoowns_share-'){
-			list($owner_attr,$owner_id) = explode('-',str_replace('whoowns_','',$f));
-   			$owners[$owner_id]->$owner_attr = $value;
+			list($shareholder_attr,$shareholder_id) = explode('-',str_replace('whoowns_','',$f));
+   			$shareholders[$shareholder_id]->$shareholder_attr = $value;
     	}
     }
     // now we can actually save the data
-    whoowns_update_share_owners($post_id, $owners);
+    $changed_shares = whoowns_update_shareholders($post_id, $shareholders);
+    #pR($changed_shares || $changed_revenue);exit;
+    // If the shares or the revenue changed, it's necessary to do recalculations: Erase the network cache of all related nodes, Schedule events to refill the cache and to calculate the new accumulated power values for the whole affected nodes and finally recalculate the IPA and ranking of the whole database:
+    if ($changed_revenue || $changed_shares)
+    	whoowns_init_owner_universe_update($post_id);
 }
 add_action( 'save_post', 'whoowns_meta_boxes_save' );
 
@@ -296,11 +303,12 @@ add_action( 'save_post', 'whoowns_meta_boxes_save' );
 function whoowns_meta_boxes_delete( $post_id ) {
 	global $wpdb;
 	// if our current user can't edit this post, bail
-	if( !current_user_can( 'delete_whoowns_owners' ) ) return;
+	#if( !current_user_can( 'delete_whoowns_owners' ) ) return;
+	if( !current_user_can( 'delete_posts' ) ) return;
 	
+	whoowns_init_owner_universe_update($post_id, true);
 	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_shares." WHERE to_id = %d", $post_id ) );
 	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_networks_cache." WHERE post_id = %d", $post_id ) );
-	
 	return true;
 }
 add_action( 'delete_post', 'whoowns_meta_boxes_delete', 10 );
@@ -403,4 +411,19 @@ function whoowns_delete_file_callback() {
 }
 add_action('wp_ajax_whoowns_delete_file', 'whoowns_delete_file_callback');
 
+function whoowns_initialize_update_schedule() {
+	$frequency = get_option('whoowns_cron_frequency');
+	if ( !in_array($frequency, array_keys(wp_get_schedules())) )
+		$frequency = 'daily';
+	if (!($ref_hour = get_option('whoowns_cron_ref_hour')))
+		$ref_hour = 24;
+	$date = date('G-i-s',current_time('timestamp'));
+	list($h,$m,$s) = explode('-',$date);
+	$interval = ($ref_hour>$h)
+		? ($ref_hour-1)-$h
+		: ($h-1)-$ref_hour;
+	$interval = $interval*3600 + $m*60 + $s;
+	wp_clear_scheduled_hook( 'whoowns-update' );
+	wp_schedule_event(time()+$interval, $frequency, 'whoowns-update');
+}
 ?>

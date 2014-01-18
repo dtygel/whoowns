@@ -25,13 +25,10 @@ jQuery(document).ready(function($) {
 		},
 
         select: function(e, ui) {
-            var label = ui.item.label/*,
-            	 span = $("<span>").text(label),
-                 a = $("<a>").addClass("remove").attr({
-	                href: "javascript:",
-	                title: "Remove " + label
-                }).text("x").appendTo(span);
-			span.appendTo(this);*/
+        	if ($(this).attr('trigger')=='submit') {
+            	$(this).closest('form').submit();
+            }
+            var label = ui.item.label;
             $(this).val(label);
 			$(this).next(".whoowns_auto_id").val(ui.item.value);
 			return false;

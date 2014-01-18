@@ -1,17 +1,5 @@
 <?php
 
-// Version of the table
-global $whoowns_table_db_version;
-$whoowns_table_db_version = '0.3';
-
-// Table names:
-if (!isset($wpdb->whoowns_shares)) {
-	$wpdb->whoowns_shares = $wpdb->prefix."whoowns_shares";
-}
-if (!isset($wpdb->whoowns_networks_cache)) {
-	$wpdb->whoowns_networks_cache = $wpdb->prefix."whoowns_networks_cache";
-}
-
 load_plugin_textdomain('whoowns', false, basename( dirname( __FILE__ ) ) . '/languages' );
 
 function create_whoowns_taxonomies() {
@@ -139,8 +127,9 @@ function create_whoowns_owner_post_type() {
 		'publicly_queryable'  => true,
 		'query_var'           => 'whoowns',
 		'rewrite'             => $rewrite,
-		'capability_type'     => 'whoowns_owner',
-		'map_meta_cap'        => true
+		'capability_type'	  => 'post'
+		/*'capability_type'     => 'whoowns_owner',
+		'map_meta_cap'        => true*/
 	);
 	register_post_type( 'whoowns_owner', $args );
 }
@@ -150,7 +139,7 @@ function add_whoowns_owner_caps_to_users() {
   $whoowns_capabilities=get_option('whoowns_capabilities');
   
   // Para uso somente como devel!
-  //whoowns_clean_caps();exit;
+  #whoowns_clean_caps();exit;
 
   add_role( 'whoowns_owner_author', __('Owner Author', 'whoowns') );
   
@@ -175,13 +164,14 @@ function add_whoowns_owner_caps_to_users() {
     get_role( 'administrator' ),
     get_role( 'editor' ),
   );
+
   foreach ($roles as $role) {
     foreach ($caps as $cap) {
       $role->add_cap( $cap );
     }
   }
 }
-add_action( 'init', 'add_whoowns_owner_caps_to_users',10 );
+#add_action( 'init', 'add_whoowns_owner_caps_to_users',10 );
 
 function whoowns_clean_caps(){
 	global $wp_roles;
