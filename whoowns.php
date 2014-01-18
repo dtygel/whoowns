@@ -1,10 +1,10 @@
 <?php
 /*
-Plugin Name: Who owns Brazil?
-Plugin URI: http://github.com/dtygel/whoownsWPPlugin
-Description: Plugin of 'Proprietarios do Brasil' for Wordpress
-Author: DanielTygel
-Version: 0.1
+Plugin Name: Who owns Your Country?
+Plugin URI: http://github.com/dtygel/whoowns
+Description: Wordpress Plugin to calculate and show the Economic Power Networks in your country
+Author: Daniel Tygel
+Version: 0.8
 Author URI: http://cirandas.net/dtygel
 */
 
