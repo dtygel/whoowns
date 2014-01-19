@@ -649,11 +649,11 @@ function whoowns_init_owner_universe_update($postid, $was_deleted=false) {
 // This is the function which configures the whoowns-update schedule for the owners in the $net array:
 function whoowns_init_update($net) {
 	// Scheduling events (every 2 seconds) to re-cache the power network of each node:
-	//TODO: find a better way to schedule these events, not directly. It could be one by one, using an option in wp_options (indicating which postids should be triggered)
-	foreach ($net as $i=>$n_postid) {
+	// Note: I've put the metakey updates in the midnight cron (look at 'whoowns_update' function)...
+	/*foreach ($net as $i=>$n_postid) {
 		wp_schedule_single_event( time()+($i*2), 'whoowns-update-metakey-controlled-by', array($n_postid) );
 		wp_schedule_single_event( time()+(($i+1)*2), 'whoowns-update-metakey-controls-final', array($n_postid) );
-	}
+	}*/
 	
 	$whoowns_cron = get_option('whoowns_cron');
 	if ($whoowns_cron['postids']) {

@@ -292,10 +292,30 @@ function whoowns_meta_boxes_save( $post_id ) {
     $changed_shares = whoowns_update_shareholders($post_id, $shareholders);
     #pR($changed_shares || $changed_revenue);exit;
     // If the shares or the revenue changed, it's necessary to do recalculations: Erase the network cache of all related nodes, Schedule events to refill the cache and to calculate the new accumulated power values for the whole affected nodes and finally recalculate the IPA and ranking of the whole database:
-    if ($changed_revenue || $changed_shares)
+    echo "New status = ".$_POST['post_status'].". Existing status=".get_post_status($post_id);
+    pR(get_post_ancestors( $post_id ));
+    exit;
+    if ($_POST['post_status']=='publish' && ($changed_revenue || $changed_shares || get_post_status=='pending'))
     	whoowns_init_owner_universe_update($post_id);
 }
 add_action( 'save_post', 'whoowns_meta_boxes_save' );
+
+function whoowns_meta_boxes_trashed( $post_id ) {
+	global $wpdb;
+	// if our current user can't edit this post, bail
+	#if( !current_user_can( 'delete_whoowns_owners' ) ) return;
+	if( !current_user_can( 'delete_posts' ) ) return;
+	
+	if (get_post_status( $post_id )=='publish') {
+    	whoowns_init_owner_universe_update($post_id, true);
+		$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_shares." WHERE to_id = %d", $post_id ) );
+		$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_networks_cache." WHERE post_id = %d", $post_id ) );
+	}
+	return true;
+}
+add_action( 'wp_trash_post', 'whoowns_meta_boxes_trashed');
+add_action( 'untrashed_post', 'whoowns_meta_boxes_trashed');
+
 
 
 
@@ -306,8 +326,9 @@ function whoowns_meta_boxes_delete( $post_id ) {
 	#if( !current_user_can( 'delete_whoowns_owners' ) ) return;
 	if( !current_user_can( 'delete_posts' ) ) return;
 	
-	whoowns_init_owner_universe_update($post_id, true);
+   	whoowns_init_owner_universe_update($post_id, true);
 	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_shares." WHERE to_id = %d", $post_id ) );
+	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_shares." WHERE from_id = %d", $post_id ) );
 	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$wpdb->whoowns_networks_cache." WHERE post_id = %d", $post_id ) );
 	return true;
 }
