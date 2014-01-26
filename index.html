@@ -30,20 +30,13 @@
         <h2>
 <a name="who-owns-your-country" class="anchor" href="#who-owns-your-country"><span class="octicon octicon-link"></span></a>Who Owns your Country</h2>
 
-<p>Who Owns your Country. This codebase runs the website <a href="http://proprietariosdobrasil.eita.org.br/">proprietariosdobrasil.eita.org.br</a>.</p>
+<p>What is the economic power structure of the private groups in your country? Who are the actors who accumulate the most power in this structure, and what is the relationship amongst them? What is the degree of influence of this invisible power structure, over government decisions in terms of development and economic policies? How does the State relate and feed this power structure and what are the counterparts of this relationship for the well being of society? It is with the objective to respond to these and other questions that we built the “Brazil's Owners” Project and corresponding methodology.</p>
 
-<p>"Who Owns your Country" is a plugin for Wordpress which uses the methodology developped by EITA (<a href="http://eita.org.br">http://eita.org.br</a>) and IMD (<a href="http://maisdemocracia.org.br">http://maisdemocracia.org.br</a>) for the project "WHO OWNS BRAZIL".</p>
+<p>"Who Owns your Country" is a plugin for Wordpress which uses the methodology developped by EITA (<a href="http://eita.org.br">http://eita.org.br</a>) and IMD (<a href="http://maisdemocracia.org.br">http://maisdemocracia.org.br</a>) for the project "WHO OWNS BRAZIL" (<a href="http://proprietariosdobrasil.eita.org.br">http://proprietariosdobrasil.eita.org.br</a>).</p>
 
-<p>It connects enterprises data to build Power Networks and a ranking of the most powerful actors in this constellation, allowing visitors to see the data in a variety of ways, including charts and interactive network maps (using the cytiscape.js library).</p>
+<p>It connects enterprises, people and government's ownership and revenue information to build Power Networks and a ranking of the most powerful actors in this constellation, allowing visitors to see the data in a variety of ways, including charts, factsheets and interactive network maps.</p>
 
 <p>For more information on the methodology, visit <a href="http://www.proprietariosdobrasil.org.br/index.php/en/">http://www.proprietariosdobrasil.org.br/index.php/en/</a> . We also have a paper about the methodology in English which will soon be available.</p>
-
-<h2>
-<a name="installing" class="anchor" href="#installing"><span class="octicon octicon-link"></span></a>Installing</h2>
-
-<p>You must follow the common steps to install a plugin in Wordpress: download the files in a folder called "whoowns" inside the wp-content/plugins folder. Then, as administrator, click on "Activate" in the "Who Owns" plugin.</p>
-
-<p>You can configure some of the settings in the menu on the left, called "Owners".</p>
 
 <h2>
 <a name="contributions" class="anchor" href="#contributions"><span class="octicon octicon-link"></span></a>Contributions</h2>
@@ -53,6 +46,73 @@
 <p>If you would like to send a question to us, send your message to <a href="mailto:contato@proprietariosdobrasil.org.br">contato@proprietariosdobrasil.org.br</a> .</p>
 
 <h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<ol>
+<li>Download the zip file and unzip it in the wp-content/plugins folder of your wordpress installation</li>
+<li>Go to the plugins administration panel in your WP website and activate the plugin</li>
+<li>You can change settings in the "Owners" configuration menu.</li>
+</ol><h2>
+<a name="using-the-plugin-in-your-template" class="anchor" href="#using-the-plugin-in-your-template"><span class="octicon octicon-link"></span></a>Using the plugin in your template</h2>
+
+<p>When you activate the plugin, you'll see an "Owners" item in the left menu of the WP Admin Panel. You can easily insert new owners, with the shareholders, logo, revenue, type (state, enterprise, person) and other related information.</p>
+
+<p>The plugin creates automatically a special "factsheet" page for each owner added (see screnshots). Besides that, it creates a search utility for listing owners with different filters and orderings.</p>
+
+<p>You can make changes in the "Owners" settings page. For example, you can decide what slug defines the owner's URLs. By default, it's <em>owners</em>. If your WordPress site is configured to have permalinks (post name), then the address of an owner will be: yourwebsite/owners/name-of-the-owner. And the place where the guests can look for owners will be: yourwebsite/owners.</p>
+
+<p>Please let us know if you have any doubts!</p>
+
+<h2>
+<a name="translations" class="anchor" href="#translations"><span class="octicon octicon-link"></span></a>Translations</h2>
+
+<p>Who Owns Your Country is a fully internationalized (i.e. fully translateable) plugin. If you would like to make a translation of the plugin to your language, please send a message to us at <a href="mailto:contato@proprietariosdobrasil.org.br">contato@proprietariosdobrasil.org.br</a> .</p>
+
+<h3>
+<a name="available-languages" class="anchor" href="#available-languages"><span class="octicon octicon-link"></span></a>Available languages</h3>
+
+<ul>
+<li>English</li>
+<li>Brazilian Portuguese, by daniel tygel</li>
+</ul><h2>
+<a name="screenshots" class="anchor" href="#screenshots"><span class="octicon octicon-link"></span></a>Screenshots</h2>
+
+<p><em>1. Factsheet page of an owner (Section: global vision). The factsheet comes out of the box with the following sections: <strong>Global Vision</strong>, <strong>Power Network</strong> (graphic and list views), <strong>Related articles</strong>, <strong>In the media</strong>. This screenshot exemplifies the plugin's hooks: the hooks are used to add two more sections (<strong>electoral donations</strong> and <strong>public fundings</strong>), and also to change the name of a section ("Related articles" was renamed to "Power analysis")</em>
+<img src="http://ps.w.org/who-owns-your-country/assets/screenshot-1.png?rev=845477" alt="Screenshot 1"></p>
+
+<p><em>2. Factsheet page - section "Power network". At the left you have the list view, and in the center there is the graphic view. The map is fully interactive, and clicking on any element opens up a box on the top left with its details.</em>
+<img src="http://ps.w.org/who-owns-your-country/assets/screenshot-2.png?rev=845477" alt="Screenshot 2"></p>
+
+<p><em>3. Factsheet page - section "In the media". In the configuration of the plugin, you can choose which news websites will be consulted regularly to show the last news related to the owner's power network.</em>
+<img src="http://ps.w.org/who-owns-your-country/assets/screenshot-3.png?rev=845477" alt="Screenshot 3"></p>
+
+<p><em>4. Page for searching the owners. Hooks in the plugin also allow the template owner to add custom columns and orderings to this page. Besides the filters (by enterprises, persons, state institutions and "ranked" corporations) and ordering, the text search form has an autocomplete feature, leading the guest directly to the factsheet og the owner found.</em>
+<img src="http://ps.w.org/who-owns-your-country/assets/screenshot-4.png?rev=845477" alt="Screenshot 4"></p>
+
+<h2>
+<a name="changelog" class="anchor" href="#changelog"><span class="octicon octicon-link"></span></a>Changelog</h2>
+
+<h3>
+<a name="091" class="anchor" href="#091"><span class="octicon octicon-link"></span></a>0.91</h3>
+
+<ul>
+<li>Fix the tags for the wordpress repository to correctly point to the latest release.</li>
+</ul><h3>
+<a name="09" class="anchor" href="#09"><span class="octicon octicon-link"></span></a>0.9</h3>
+
+<ul>
+<li>The plugin now offers a built-in "factsheet" page of each owner, so that the plugin works on any template out of the box without the need to change it.</li>
+<li>The plugin now offers a built-in "look for owners" page, so that the this feature works on any template out of the box without the need to change it.</li>
+<li>Added hooks for the factsheet for templates (or other plugins) customizations</li>
+<li>Added hooks for the owners search page for templates (or other plugins) customizations</li>
+<li>Updated the javascript and stylesheets files</li>
+<li>Updated the Brazilian Portuguese translation</li>
+</ul><h3>
+<a name="08" class="anchor" href="#08"><span class="octicon octicon-link"></span></a>0.8</h3>
+
+<ul>
+<li>Added the plugin to wordpress repository, with all the basic infrastructure available.</li>
+</ul><h2>
 <a name="ownership" class="anchor" href="#ownership"><span class="octicon octicon-link"></span></a>Ownership</h2>
 
 <p>CopyLeft 2013, Daniel Tygel and members of EITA and IMD. Licensed under the AFFERO License (<a href="http://www.gnu.org/licenses/agpl-3.0-standalone.html">http://www.gnu.org/licenses/agpl-3.0-standalone.html</a>).</p>
