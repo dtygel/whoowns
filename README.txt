@@ -2,8 +2,8 @@
 Contributors: dtygel
 Tags: who owns your country, power networks, corporations, economy, politics, economic chain
 Requires at least: 3.6
-Tested up to: 3.8.1
-Stable tag: 0.9
+Tested up to: 4.1
+Stable tag: 0.92
 License: AFFERO License
 License URI: http://www.gnu.org/licenses/agpl-3.0-standalone.html
 
@@ -25,7 +25,7 @@ For more information on the methodology, visit http://www.proprietariosdobrasil.
 
 We will be glad to collaborate with other actors who wish to use the plugin in their country and make it better. Don't hesitate to join us in this common effort to contribute for a real democratic world, in which the economic powers are not directing the whole economy of the countries!
 
-If you would like to send a question to us, send your message to contato@proprietariosdobrasil.org.br .
+If you would like to send a question to us, just write to the [support forum](http://wordpress.org/support/plugin/who-owns-your-country).
 
 == Installation ==
 
@@ -41,11 +41,15 @@ The plugin creates automatically a special "factsheet" page for each owner added
 
 You can make changes in the "Owners" settings page. For example, you can decide what slug defines the owner's URLs. By default, it's *owners*. If your WordPress site is configured to have permalinks (post name), then the address of an owner will be: yourwebsite/owners/name-of-the-owner. And the place where the guests can look for owners will be: yourwebsite/owners.
 
-Please let us know if you have any doubts!
+Please let us know if you have any doubts by writing to the [support forum](http://wordpress.org/support/plugin/who-owns-your-country).
 
 == Translations ==
 
-Who Owns Your Country is a fully internationalized (i.e. fully translateable) plugin. If you would like to make a translation of the plugin to your language, you can do it online here at our (translation platform)[https://osx6cfk.oneskyapp.com/collaboration/project?id=6944]. If your language is not listed there, please send a message to us at contato@proprietariosdobrasil.org.br . We'll immediately add your language for you to start translating.
+Who Owns Your Country is a fully internationalized (i.e. fully translateable) plugin.
+
+If you would like to add a translation of the plugin to your language, you can do it online at our [Translation platform: https://osx6cfk.oneskyapp.com/collaboration/project?id=6944](https://osx6cfk.oneskyapp.com/collaboration/project?id=6944). 
+
+If your language is not listed there, please send a message to us at contato@proprietariosdobrasil.org.br . We'll immediately add your language for you to start translating.
 
 = Available languages =
 
@@ -60,6 +64,16 @@ Who Owns Your Country is a fully internationalized (i.e. fully translateable) pl
 1. Page for searching the owners. Hooks in the plugin also allow the template owner to add custom columns and orderings to this page. Besides the filters (by enterprises, persons, state institutions and "ranked" corporations) and ordering, the text search form has an autocomplete feature, leading the guest directly to the factsheet og the owner found.
 
 == Changelog ==
+
+= 0.92 =
+* Fixed some PHP warnings for empty objects
+* Changed the way whoowns tables are called
+
+= 0.91 =
+* Fixed the header of whoowns.php to point to most recent file
+* Fixed typo in utils.php (from <? to <?php)
+* Added translators website in the README.txt file.
+
 
 = 0.9 =
 * The plugin now offers a built-in "factsheet" page of each owner, so that the plugin works on any template out of the box without the need to change it.
