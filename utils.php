@@ -656,7 +656,7 @@ function whoowns_init_update($net) {
 	}*/
 	
 	$whoowns_cron = get_option('whoowns_cron');
-	if ($whoowns_cron['postids']) {
+	if (isset($whoowns_cron['postids']) && $whoowns_cron['postids']) {
 		$net = array_unique(array_merge($net,$whoowns_cron['postids']));
 	}
 	$whoowns_cron['stage'] = 1;
@@ -730,8 +730,8 @@ function whoowns_update_network_cache($postid, $conclude) {
 	$html = ob_get_contents();
 	ob_end_clean();
 	whoowns_save_cached($postid,array('cy_list'=>trim($html)));
-	/*//repopulate news:
-	whoowns_update_network_related_news($postid);*/
+	//repopulate news:
+	whoowns_update_network_related_news($postid);
 	
 	// If this was the last postid of the targets, it's time to go to the next stage of action whoowns-update
 	if ($conclude) {
@@ -819,7 +819,7 @@ function whoowns_check_if_interchainer($postids, $save_metadata=false) {
 	$is_interchainer = array();
 	foreach ($postids as $postid) {
 		//INTERCHAIN PARTICIPATIONS:
-		//Definition of non-controlled enterprises with interchain participations: The criteria is that the enterprise is nos controlled by any other enterprise and is not an ultimate controller, but participates directly in more than one different chain (be it by it or by a directly controlled enterprise)
+		//Definition of non-controlled enterprises with interchain participations: The criteria is that the enterprise is not controlled by any other enterprise and is not an ultimate controller, but participates directly in more than one different chain (be it by it or by a directly controlled enterprise)
 		$type = whoowns_get_owner_type($postid);
 		if ($type && $type->slug!='private-enterprise') {
 			$is_interchainer[$postid] = false;
@@ -973,10 +973,10 @@ function whoowns_calculate_revenue($postids) {
 	$value = array();
 	foreach ($postids as $i=>$postid) {
 		$revenue = get_post_meta($postid, 'whoowns_revenue', true);
-		$months = (intval($revenue['months']))
+		$months = (isset($revenue['months']) && intval($revenue['months']))
 			? intval($revenue['months'])
 			: 12;
-		$v = floatval($revenue['value']);
+		$v = (isset($revenue['value'])) ? floatval($revenue['value']) : 0;
 		if ($v && $months<=12)
 			$value[$postid] = ($v/$months)*12;
 	}
@@ -1121,6 +1121,8 @@ function whoowns_generate_directed_network($postid,$net=array(),$dir,$minimum_sh
 function whoowns_generate_network($postid,$mode='unique',$show_dir=false) {
 	$cached=true;
 	if ($show_dir || !($net = whoowns_retrieve_cached($postid,'post_ids',true))) {
+		if (!$net)
+			$net = array();
 		$net['participation'] = whoowns_generate_directed_network($postid,array(),'participation');
 		$net['composition'] = whoowns_generate_directed_network($postid,array(),'composition');
 		$cached=false;
@@ -1546,6 +1548,7 @@ function whoowns_select_owners($filters,$s='',$orderby,$order,$page=0) {
 	foreach ($res->posts as $i=>$r) {
 		$owners[] = whoowns_get_owner_data($r,true);
 	}
+	$return = new stdClass();
 	$return->found_posts = $res->found_posts;
 	$return->max_num_pages = $res->max_num_pages;
 	$return->owners = $owners;
@@ -1606,6 +1609,8 @@ function whoowns_template_get_owner_data($postid,$section) {
 		
 		
 		case 'news':
+			if (!$owner_data)
+				$owner_data = new stdClass();
 			$owner_data->news = array_slice(whoowns_get_network_related_news($postid),0,30);
 		break;
 		
@@ -1659,8 +1664,11 @@ function whoowns_template_get_owner_data($postid,$section) {
 			$owner_data->random_related_post = whoowns_get_owner_data(whoowns_get_network_related_articles($postid, 'post', array('orderby'=>'rand', 'posts_per_page'=>1)), true);
 		break;
 	}
-	if (!isset($owner_data->type))
+	if (!isset($owner_data->type)) {
+		if (!isset($owner_data))
+			$owner_data = new stdClass();
 		$owner_data->type = whoowns_get_owner_type($postid);
+	}
 	
 	return $owner_data;
 }
@@ -1969,6 +1977,7 @@ function whoowns_template_show_owners($owners, $hide_columns=array()) {
 	</tbody>
 	</table>
 	<?php
+	$return = new stdClass();
 	$return->posts_found = $owners->found_posts;
 	$return->max_num_pages = $owners->max_num_pages;
 	return $return;

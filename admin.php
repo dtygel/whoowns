@@ -220,6 +220,10 @@ function whoowns_meta_boxes_save( $post_id ) {
 	#if( !current_user_can( 'edit_whoowns_owners' ) ) return;
 	if( !current_user_can( 'edit_posts' ) ) return;
 	
+	// If this is just a revision, bail
+	if ( wp_is_post_revision( $post_id ) )
+		return;
+	
 	// if it is not a whoowns_owner type of post, bail
 	if ( $_POST['post_type'] != 'whoowns_owner') return;
 	
@@ -352,6 +356,8 @@ function whoowns_meta_box_related_owners ($post) {
 	#pR($owners);exit;
 	$num_existing_owners=count($owners);
 	for ($i=$num_existing_owners;$i<get_option('whoowns_default_shareholders_number');$i++) {
+		if (!isset($owners[$i]))
+			$owners[$i] = new stdClass();
 		$owners[$i]->ID='';
 	}
 	?>
