@@ -642,7 +642,7 @@ function whoowns_init_owner_universe_update($postid, $was_deleted=false) {
 		$net = array_diff($net, array($postid));
 	
 	//Erasing the cache of all nodes of the network:
-	$wpdb->query( $wpdb->prepare(  "DELETE FROM ".$whoowns_tables->networks_cache." WHERE post_id IN (%d)", implode(', ',$net) ) );
+	$wpdb->query( "DELETE FROM ".$whoowns_tables->networks_cache." WHERE post_id IN (".implode(', ',$net).")" );
 	
 	whoowns_init_update($net);
 }
@@ -730,8 +730,8 @@ function whoowns_update_network_cache($postid, $conclude) {
 	$html = ob_get_contents();
 	ob_end_clean();
 	whoowns_save_cached($postid,array('cy_list'=>trim($html)));
-	//repopulate news:
-	whoowns_update_network_related_news($postid);
+	//repopulate news (temporarily disabled -> let the news come when the post is first visited again)
+	//whoowns_update_network_related_news($postid);
 	
 	// If this was the last postid of the targets, it's time to go to the next stage of action whoowns-update
 	if ($conclude) {
@@ -749,7 +749,7 @@ add_action( 'whoowns-update-network-cache','whoowns_update_network_cache' );
 //This function gets the whole universe of points related to this reference. This is useful for calculating the accumulated power, interchainer and final controllers, not for the graphic. Use with care...
 function whoowns_generate_full_network($postid) {
 	$full_net = whoowns_generate_directed_network($postid,array(),'all');
-	return array_unique($full_net);
+	return array_values(array_unique($full_net));
 }
 
 
@@ -1129,15 +1129,23 @@ function whoowns_generate_network($postid,$mode='unique',$show_dir=false) {
 	}
 	if ($mode=='unique') {
 		if ($show_dir) {
-			$net['participation'] = array_unique($net['participation']);
-			$net['composition'] = array_unique($net['composition']);
+			$net['participation'] = array_values(array_unique($net['participation']));
+			$net['composition'] = array_values(array_unique($net['composition']));
 		} elseif (!$cached) {
-			$net = array_unique(array_merge($net['participation'],$net['composition']));
+			$net = array_values(array_unique(array_merge($net['participation'],$net['composition'])));
 			whoowns_save_cached($postid,array('post_ids'=>$net));
 		}
 	}
-	if ($mode=='without_reference')
-		unset($net[0], $net['participation'][0], $net['composition'][0]);
+	if ($mode=='without_reference') {
+		if ($net[0]) {
+			unset($net[0]);
+			$net = array_values($net);
+		} else {
+			unset($net['participation'][0], $net['composition'][0]);
+			$net['participation'] = array_values($net['participation']);
+			$net['composition'] = array_values($net['composition']);
+		}
+	}
 	//pR($net);
 	return $net;
 }
